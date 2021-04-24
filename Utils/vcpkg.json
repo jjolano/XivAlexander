@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "name": "xivalexander-utils",
   "version-string": "_",
@@ -8,4 +9,12 @@
       "version>=": "1.2.11#9"
     }
   ]
+=======
+{
+  "name": "xivalexander-utils",
+  "version-string": "_",
+  "dependencies": [
+    {"name": "zlib", "version>=": "1.2.11#9"}
+  ]
+>>>>>>> 80761b8... add option for reduce packet delay
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "name": "xivalexander",
   "version-string": "1.10",
@@ -22,4 +23,17 @@
       "version>=": "1.3.3#1"
     }
   ]
+=======
+{
+  "name": "xivalexander",
+  "version-string": "1.10",
+  "homepage": "https://github.com/Soreepeong/XivAlexander",
+  "description": "Double weaving on high latency.",
+  "dependencies": [
+    {"name": "zlib", "version>=": "1.2.11#9"},
+    {"name": "scintilla", "version>=": "4.4.5"},
+    {"name": "nlohmann-json", "version>=": "3.9.1"},
+    {"name": "minhook", "version>=": "1.3.3#1"}
+  ]
+>>>>>>> 80761b8... add option for reduce packet delay
 }
