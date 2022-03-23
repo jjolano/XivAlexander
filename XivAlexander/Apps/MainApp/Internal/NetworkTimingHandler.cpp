@@ -371,9 +371,9 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 					const auto latencyEstimate = (rttAdjusted + rttMin + rttMean) / 3 - rttDeviation;
 					description << std::format(" latEst={}us", latencyEstimate);
 
-					// Estimate server processing time based on statistics and actual latency.
+					// Estimate server processing time based on estimated and actual latency, with more weight on estimated latency.
 					// Slight penalty for 0-ping users, but not as heavy as Mode 1.
-					const auto delay = std::max(((rttAdjusted - latencyEstimate) + (rttAdjusted - latencyAdjustedImmediate)) / 2, 0LL);
+					const auto delay = std::max((((rttAdjusted - latencyEstimate) * 2) + (rttAdjusted - latencyAdjustedImmediate)) / 3, 0LL);
 					description << std::format(" delayAdj={}us", delay);
 
 					if (rttUs > 80000 && latencyUs < 10000) {
