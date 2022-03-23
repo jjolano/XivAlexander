@@ -338,7 +338,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 
 			const auto socketLatencyUs = Conn.FetchSocketLatencyUs().value_or(INT64_MAX);
 			const auto pingLatencyUs = pingTrackerUs ? pingTrackerUs->Latest() : INT64_MAX;
-			const auto latencyUs = std::min(pingLatencyUs, socketLatencyUs);
+			const auto latencyUs = socketLatencyUs != INT64_MAX ? socketLatencyUs : pingLatencyUs;
 
 			auto mode = runtimeConfig.HighLatencyMitigationMode.Value();
 
@@ -346,10 +346,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 				mode = HighLatencyMitigationMode::SimulateRtt;
 				description << " latencyUnavailable";
 			} else {
-				if (socketLatencyUs < pingLatencyUs)
-					description << std::format(" pingLatency={}us", latencyUs);
-				else
-					description << std::format(" socketLatency={}us", latencyUs);
+				description << std::format(" latency={}us", latencyUs);
 			}
 
 			switch (mode) {
@@ -363,7 +360,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 					const auto [rttMean, rttDeviation] = Conn.ApplicationLatencyUs.MeanAndDeviation();
 					description << std::format(" rttAvg={}+{}us", rttMean, rttDeviation);
 
-					const auto [latencyMean, latencyDeviation] = !pingTrackerUs || pingLatencyUs > socketLatencyUs ? Conn.SocketLatencyUs.MeanAndDeviation() : pingTrackerUs->MeanAndDeviation();
+					const auto [latencyMean, latencyDeviation] = socketLatencyUs != INT64_MAX ? Conn.SocketLatencyUs.MeanAndDeviation() : pingTrackerUs->MeanAndDeviation();
 					description << std::format(" latAvg={}+{}us", latencyMean, latencyDeviation);
 
 					// Correct latency and server response time values in case of outliers.
@@ -374,15 +371,9 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 					const auto latencyEstimate = (rttAdjusted + rttMin + rttMean) / 3 - rttDeviation;
 					description << std::format(" latEst={}us", latencyEstimate);
 
-					// Correct latency value based on estimate if server response time is stable.
-					const auto latencyAdjusted = std::max(latencyEstimate, latencyAdjustedImmediate);
-					description << std::format(" latAdj={}us", latencyAdjusted);
-
-					// This delay is based on server's processing time.
-					// If the server is busy, everyone should feel the same effect.
-					// * Only the player's ping is taken out of the equation. (- latencyAdjusted)
-					// * Prevent accidentally too high ExtraDelay. (Clamp above 1us)
-					const auto delay = Utils::Clamp(rttAdjusted - latencyAdjusted, 1LL, Config->Runtime.MaximumAnimationLockDurationUs.Value());
+					// Estimate server processing time based on statistics and actual latency.
+					// Slight penalty for 0-ping users, but not as heavy as Mode 1.
+					const auto delay = std::max(((rttAdjusted - latencyEstimate) + (rttAdjusted - latencyAdjustedImmediate)) / 2, 0LL);
 					description << std::format(" delayAdj={}us", delay);
 
 					if (rttUs > 80000 && latencyUs < 10000) {
