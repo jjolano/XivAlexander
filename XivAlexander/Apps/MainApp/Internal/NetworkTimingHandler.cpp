@@ -372,7 +372,8 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 					description << std::format(" latEst={}us", latencyEstimate);
 
 					// Add delay based on latency.
-					const auto delay = std::max(latencyEstimate / 2, (latencyEstimate + latencyAdjustedImmediate) / 4);
+					const auto delayBase = std::max(latencyEstimate / 2, (latencyEstimate + latencyAdjustedImmediate) / 4);
+					const auto delay = (delayBase + std::min(rttAdjusted - latencyEstimate, rttAdjusted - latencyAdjustedImmediate)) / 2;
 					description << std::format(" delayAdj={}us", delay);
 
 					if (rttUs > 80000 && latencyUs < 10000) {
