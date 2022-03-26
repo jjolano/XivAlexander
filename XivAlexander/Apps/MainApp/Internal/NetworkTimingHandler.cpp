@@ -382,7 +382,8 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 							Config->Runtime.GetLangId(), IDS_WARNING_ZEROPING,
 							rttUs, latencyUs / 1000);
 					}
-					return lastAnimationLockEndsAtUs + originalWaitUs + delay;
+
+					return nowUs + (originalWaitUs - rttUs) + delay;
 				}
 			}
 
