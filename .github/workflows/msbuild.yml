@@ -28,25 +28,22 @@ jobs:
     - name: run-vcpkg
       uses: lukka/run-vcpkg@v10.2
       with:
-        vcpkgDirectory: '${{ github.workspace }}/XivAlexander'
         vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
-        vcpkgJsonGlob: '**/vcpkg.json'
+        vcpkgJsonGlob: 'XivAlexander/vcpkg.json'
         runVcpkgInstall: true
 
     - name: run-vcpkg
       uses: lukka/run-vcpkg@v10.2
       with:
-        vcpkgDirectory: '${{ github.workspace }}/XivAlexanderCommon'
         vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
-        vcpkgJsonGlob: '**/vcpkg.json'
+        vcpkgJsonGlob: 'XivAlexanderCommon/vcpkg.json'
         runVcpkgInstall: true
   
     - name: run-vcpkg
       uses: lukka/run-vcpkg@v10.2
       with:
-        vcpkgDirectory: '${{ github.workspace }}/ScratchProject'
         vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
-        vcpkgJsonGlob: '**/vcpkg.json'
+        vcpkgJsonGlob: 'ScratchProject/vcpkg.json'
         runVcpkgInstall: true
 
     - name: Build
