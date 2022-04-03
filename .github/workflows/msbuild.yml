@@ -29,6 +29,8 @@ jobs:
       uses: lukka/run-vcpkg@v10.2
       with:
         vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
+        vcpkgJsonGlob: '**/vcpkg.json'
+        runVcpkgInstall: true
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
