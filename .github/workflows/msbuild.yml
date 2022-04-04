@@ -25,14 +25,29 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
       
-    - name: Setup vcpkg
+    - name: Setup vcpkg 1/4
       uses: lukka/run-vcpkg@v10.2
       with:
         vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
-        vcpkgJsonGlob: '**/vcpkg.json'
+        vcpkgJsonGlob: 'XivAlexander/vcpkg.json'
         runVcpkgInstall: true
     
-    - run: ${{ github.workspace }}/vcpkg/vcpkg integrate install
+    - name: Setup vcpkg 2/4
+      uses: lukka/run-vcpkg@v10.2
+      with:
+        vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
+        vcpkgJsonGlob: 'XivAlexanderCommon/vcpkg.json'
+        runVcpkgInstall: true
+    
+    - name: Setup vcpkg 3/4
+      uses: lukka/run-vcpkg@v10.2
+      with:
+        vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
+        vcpkgJsonGlob: 'ScratchProject/vcpkg.json'
+        runVcpkgInstall: true
+    
+    - name: Setup vcpkg 4/4
+      run: ${{ github.workspace }}/vcpkg/vcpkg integrate install
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
