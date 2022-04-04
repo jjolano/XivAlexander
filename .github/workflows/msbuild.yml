@@ -25,32 +25,14 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
       
-    - name: Setup vcpkg 1/4
+    - name: Setup vcpkg
       uses: lukka/run-vcpkg@v10.2
-      with:
-        vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
-        vcpkgJsonGlob: 'XivAlexander/vcpkg.json'
-        runVcpkgInstall: true
     
-    - name: Setup vcpkg 2/4
-      uses: lukka/run-vcpkg@v10.2
-      with:
-        vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
-        vcpkgJsonGlob: 'XivAlexanderCommon/vcpkg.json'
-        runVcpkgInstall: true
-    
-    - name: Setup vcpkg 3/4
-      uses: lukka/run-vcpkg@v10.2
-      with:
-        vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
-        vcpkgJsonGlob: 'ScratchProject/vcpkg.json'
-        runVcpkgInstall: true
-    
-    - name: Setup vcpkg 4/4
+    - name: Link vcpkg to MSBuild
       run: ${{ github.workspace }}/vcpkg/vcpkg integrate install
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}} /p:PreBuildEvent=;PostBuildEvent= /p:PostBuildEventUseInBuild=false 
