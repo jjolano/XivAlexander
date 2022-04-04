@@ -167,13 +167,13 @@ copy /y "$(TargetPath)" "C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A
 copy /y "$(TargetPath)" "$(LOCALAPPDATA)\XivAlexander\" || cd.
 </Command>
     </PostBuildEvent>
-    <CustomBuildStep>
+    <!-- <CustomBuildStep>
       <Command>set /p CERT_PASSWORD= &lt; "$(SolutionDir)Build\CertificatePassword.txt"
 "$(FrameworkSDKDir)bin\$(TargetPlatformVersion)\x86\signtool.exe" sign /tr http://timestamp.digicert.com /td sha256 /v /fd sha256 /f "$(SolutionDir)Build\Certificate.pfx" /p "%25CERT_PASSWORD%25" "$(TargetPath)" &gt; "$(TargetPath).sign.txt"
 "$(FrameworkSDKDir)bin\$(TargetPlatformVersion)\x86\signtool.exe" sign /tr http://timestamp.digicert.com /td sha1 /as /v /fd sha1 /f "$(SolutionDir)Build\Certificate.pfx" /p "%25CERT_PASSWORD%25" "$(TargetPath)" &gt;&gt; "$(TargetPath).sign.txt"</Command>
       <Message>Signing $(TargetPath)</Message>
       <Outputs>$(TargetPath).sign.txt</Outputs>
-    </CustomBuildStep>
+    </CustomBuildStep> -->
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -210,13 +210,13 @@ copy /y "$(TargetPath)" "C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A
 copy /y "$(TargetPath)" "$(LOCALAPPDATA)\XivAlexander\" || cd.
 </Command>
     </PostBuildEvent>
-    <CustomBuildStep>
+    <!-- <CustomBuildStep>
       <Command>set /p CERT_PASSWORD= &lt; "$(SolutionDir)Build\CertificatePassword.txt"
 "$(FrameworkSDKDir)bin\$(TargetPlatformVersion)\x86\signtool.exe" sign /tr http://timestamp.digicert.com /td sha256 /v /fd sha256 /f "$(SolutionDir)Build\Certificate.pfx" /p "%25CERT_PASSWORD%25" "$(TargetPath)" &gt; "$(TargetPath).sign.txt"
 "$(FrameworkSDKDir)bin\$(TargetPlatformVersion)\x86\signtool.exe" sign /tr http://timestamp.digicert.com /td sha1 /as /v /fd sha1 /f "$(SolutionDir)Build\Certificate.pfx" /p "%25CERT_PASSWORD%25" "$(TargetPath)" &gt;&gt; "$(TargetPath).sign.txt"</Command>
       <Message>Signing $(TargetPath)</Message>
       <Outputs>$(TargetPath).sign.txt</Outputs>
-    </CustomBuildStep>
+    </CustomBuildStep> -->
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -257,13 +257,13 @@ copy /y "$(TargetPath)" "C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A
 copy /y "$(TargetPath)" "$(LOCALAPPDATA)\XivAlexander\" || cd.
 </Command>
     </PostBuildEvent>
-    <CustomBuildStep>
+    <!-- <CustomBuildStep>
       <Command>set /p CERT_PASSWORD= &lt; "$(SolutionDir)Build\CertificatePassword.txt"
 "$(FrameworkSDKDir)bin\$(TargetPlatformVersion)\x86\signtool.exe" sign /tr http://timestamp.digicert.com /td sha256 /v /fd sha256 /f "$(SolutionDir)Build\Certificate.pfx" /p "%25CERT_PASSWORD%25" "$(TargetPath)" &gt; "$(TargetPath).sign.txt"
 "$(FrameworkSDKDir)bin\$(TargetPlatformVersion)\x86\signtool.exe" sign /tr http://timestamp.digicert.com /td sha1 /as /v /fd sha1 /f "$(SolutionDir)Build\Certificate.pfx" /p "%25CERT_PASSWORD%25" "$(TargetPath)" &gt;&gt; "$(TargetPath).sign.txt"</Command>
       <Message>Signing $(TargetPath)</Message>
       <Outputs>$(TargetPath).sign.txt</Outputs>
-    </CustomBuildStep>
+    </CustomBuildStep> -->
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -304,13 +304,13 @@ copy /y "$(TargetPath)" "C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A
 copy /y "$(TargetPath)" "$(LOCALAPPDATA)\XivAlexander\" || cd.
 </Command>
     </PostBuildEvent>
-    <CustomBuildStep>
+    <!-- <CustomBuildStep>
       <Command>set /p CERT_PASSWORD= &lt; "$(SolutionDir)Build\CertificatePassword.txt"
 "$(FrameworkSDKDir)bin\$(TargetPlatformVersion)\x86\signtool.exe" sign /tr http://timestamp.digicert.com /td sha256 /v /fd sha256 /f "$(SolutionDir)Build\Certificate.pfx" /p "%25CERT_PASSWORD%25" "$(TargetPath)" &gt; "$(TargetPath).sign.txt"
 "$(FrameworkSDKDir)bin\$(TargetPlatformVersion)\x86\signtool.exe" sign /tr http://timestamp.digicert.com /td sha1 /as /v /fd sha1 /f "$(SolutionDir)Build\Certificate.pfx" /p "%25CERT_PASSWORD%25" "$(TargetPath)" &gt;&gt; "$(TargetPath).sign.txt"</Command>
       <Message>Signing $(TargetPath)</Message>
       <Outputs>$(TargetPath).sign.txt</Outputs>
-    </CustomBuildStep>
+    </CustomBuildStep> -->
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Apps\EntryPointApp\App.cpp" />
