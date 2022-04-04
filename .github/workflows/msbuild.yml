@@ -22,29 +22,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Add MSBuild to PATH
+    - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
       
-    - name: run-vcpkg
+    - name: Setup vcpkg
       uses: lukka/run-vcpkg@v10.2
       with:
         vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
-        vcpkgJsonGlob: 'XivAlexander/vcpkg.json'
+        vcpkgJsonGlob: '**/vcpkg.json'
         runVcpkgInstall: true
-
-    - name: run-vcpkg
-      uses: lukka/run-vcpkg@v10.2
-      with:
-        vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
-        vcpkgJsonGlob: 'XivAlexanderCommon/vcpkg.json'
-        runVcpkgInstall: true
-  
-    - name: run-vcpkg
-      uses: lukka/run-vcpkg@v10.2
-      with:
-        vcpkgGitCommitId: 'af2287382b1991dbdcb7e5112d236f3323b9dd7a'
-        vcpkgJsonGlob: 'ScratchProject/vcpkg.json'
-        runVcpkgInstall: true
+    
+    - run: ${{ github.workspace }}/vcpkg/vcpkg integrate install
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
