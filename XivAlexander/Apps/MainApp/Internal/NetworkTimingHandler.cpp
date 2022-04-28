@@ -355,6 +355,8 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 					return nowUs + originalWaitUs - latencyUs;
 
 				case HighLatencyMitigationMode::SimulateNormalizedRttAndLatency: {
+					// Server-side focused mode. Attempts to guess the server delay preferably using response time statistics.
+					// This aims to achieve a similar feel of real low latency play.
 					const auto rttMinUs = Conn.ApplicationLatencyUs.Min();
 					description << std::format(" rttMin={}us", rttMinUs);
 
@@ -362,7 +364,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 					description << std::format(" rttAvg={}+{}us", rttMeanUs, rttDeviationUs);
 
 					// Estimate latency based on server response time statistics.
-					auto latencyEstimateUs = ((rttMinUs + rttMeanUs) / 2) - rttDeviationUs - 30000;
+					auto latencyEstimateUs = ((rttMinUs + rttMeanUs) / 2) - ((rttDeviationUs + 30000) / 2);
 					latencyEstimateUs = std::max(latencyUs, latencyEstimateUs);
 					description << std::format(" latEst={}us", latencyEstimateUs);
 
@@ -377,7 +379,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 				}
 
 				case HighLatencyMitigationMode::StandardGcdDivision: {
-					// Client-side focused mode.
+					// Client-side focused mode. Emphasizes enforced time slices for animation locks, ensuring both consistent and legal gameplay.
 					const auto srvDelayUs = latencyUs > 0 ? ((rttUs % latencyUs) + (rttUs - latencyUs)) / 2 : rttUs;
 					description << std::format(" srv={}us", srvDelayUs);
 
@@ -393,7 +395,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 
 					// Determine best animation lock value.
 					// Calculate the delay value to add on the original lock time.
-					// Fallback to latency subtraction if double weaving is not possible.
+					// Fallback to latency subtraction if multiple weaving is not possible.
 					auto delay = srvDelayUs;
 
 					if(split > 1) {
