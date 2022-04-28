@@ -355,40 +355,29 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 					return nowUs + originalWaitUs - latencyUs;
 
 				case HighLatencyMitigationMode::SimulateNormalizedRttAndLatency: {
-					const auto rttMin = Conn.ApplicationLatencyUs.Min();
+					const auto rttMinUs = Conn.ApplicationLatencyUs.Min();
+					description << std::format(" rttMin={}us", rttMinUs);
 
-					const auto [rttMean, rttDeviation] = Conn.ApplicationLatencyUs.MeanAndDeviation();
-					description << std::format(" rttAvg={}+{}us", rttMean, rttDeviation);
-
-					const auto [latencyMean, latencyDeviation] = socketLatencyUs != INT64_MAX ? Conn.SocketLatencyUs.MeanAndDeviation() : pingTrackerUs->MeanAndDeviation();
-					description << std::format(" latAvg={}+{}us", latencyMean, latencyDeviation);
-
-					// Correct latency and server response time values in case of outliers.
-					const auto latencyAdjustedImmediate = Utils::Clamp(latencyUs, latencyMean - latencyDeviation, latencyMean + latencyDeviation);
-					const auto rttAdjusted = Utils::Clamp(rttUs, rttMean - rttDeviation, rttMean + rttDeviation);
+					const auto [rttMeanUs, rttDeviationUs] = Conn.ApplicationLatencyUs.MeanAndDeviation();
+					description << std::format(" rttAvg={}+{}us", rttMeanUs, rttDeviationUs);
 
 					// Estimate latency based on server response time statistics.
-					const auto latencyEstimate = (rttAdjusted + rttMin + rttMean) / 3 - rttDeviation;
-					description << std::format(" latEst={}us", latencyEstimate);
+					const auto latencyEstimateUs = std::max((rttMinUs + rttMeanUs - rttDeviationUs) / 2 - 30000, 0);
+					description << std::format(" latEst={}us", latencyEstimateUs);
 
-					// Add delay based on latency.
-					const auto delayBase = std::max(latencyEstimate / 2, (latencyEstimate + latencyAdjustedImmediate) / 4);
-					const auto delay = (delayBase + std::min(rttAdjusted - latencyEstimate, rttAdjusted - latencyAdjustedImmediate)) / 2;
-					description << std::format(" delayAdj={}us", delay);
-
-					if (rttUs > 80000 && latencyUs < 10000) {
-						Impl.Logger->Format<LogLevel::Warning>(
-							LogCategory::NetworkTimingHandler,
-							Config->Runtime.GetLangId(), IDS_WARNING_ZEROPING,
-							rttUs, latencyUs / 1000);
-					}
+					// Estimate server delay.
+					const auto srvDelayUs = latencyEstimateUs > 0 ? ((rttUs % latencyEstimateUs) + (rttUs - latencyEstimateUs)) / 2 : rttUs;
+					
+					// Assign new delay value.
+					const auto delay = srvDelayUs;
+					description << std::format(" delay={}us", delay);
 
 					return nowUs + (originalWaitUs - rttUs) + delay;
 				}
 
 				case HighLatencyMitigationMode::StandardGcdDivision: {
 					// Client-side focused mode.
-					const auto srvDelayUs = ((rttUs % latencyUs) + (rttUs - latencyUs)) / 2;
+					const auto srvDelayUs = latencyUs > 0 ? ((rttUs % latencyUs) + (rttUs - latencyUs)) / 2 : rttUs;
 					description << std::format(" srv={}", srvDelayUs);
 
 					// Calculate new animation lock values based on equal slices of a 2.5 GCD.
@@ -403,7 +392,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 
 					// Determine best animation lock value.
 					// Calculate the delay value to add on the original lock time.
-					// Fallback to Mode 1-style if double weaving is not possible.
+					// Fallback to latency subtraction if double weaving is not possible.
 					auto delay = srvDelayUs;
 
 					if(split > 1) {

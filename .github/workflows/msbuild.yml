@@ -44,5 +44,5 @@ jobs:
     - name: Upload Build
       uses: actions/upload-artifact@v3
       with:
-        name: build
-        path: ${{ github.workspace }}/build/Release/
+        name: ${{ github.sha }}
+        path: ${{ github.workspace }}/build/Release/XivAlexander*.dll
