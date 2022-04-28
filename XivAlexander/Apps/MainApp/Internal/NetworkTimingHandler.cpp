@@ -379,7 +379,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 				case HighLatencyMitigationMode::StandardGcdDivision: {
 					// Client-side focused mode.
 					const auto srvDelayUs = latencyUs > 0 ? ((rttUs % latencyUs) + (rttUs - latencyUs)) / 2 : rttUs;
-					description << std::format(" srv={}", srvDelayUs);
+					description << std::format(" srv={}us", srvDelayUs);
 
 					// Calculate new animation lock values based on equal slices of a 2.5 GCD.
 					// Assume GCD has 600ms lock time, and remove it from the total GCD time (this will be the weave window).
