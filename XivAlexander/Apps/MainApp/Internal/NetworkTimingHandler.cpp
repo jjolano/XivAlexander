@@ -362,7 +362,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 					description << std::format(" rttAvg={}+{}us", rttMeanUs, rttDeviationUs);
 
 					// Estimate latency based on server response time statistics.
-					const auto latencyEstimateUs = std::max((rttMinUs + rttMeanUs - rttDeviationUs) / 2 - 30000, 0);
+					const auto latencyEstimateUs = std::max((rttMinUs + rttMeanUs - rttDeviationUs) / 2 - 30000, 0L);
 					description << std::format(" latEst={}us", latencyEstimateUs);
 
 					// Estimate server delay.
