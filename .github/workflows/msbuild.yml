@@ -39,14 +39,8 @@ jobs:
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}} /p:PostBuildEventUseInBuild=false 
     
-    - name: Upload Artifact x64
+    - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: x64
-        path: ${{ github.workspace }}/build/Release/XivAlexander64.dll
-
-    - name: Upload Artifact x64
-      uses: actions/upload-artifact@v3
-      with:
-        name: x32
-        path: ${{ github.workspace }}/build/Release/XivAlexander32.dll
+        name: dll
+        path: ${{ github.workspace }}/build/Release/XivAlexander*.dll
