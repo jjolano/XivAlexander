@@ -335,6 +335,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 		int64_t ResolveNextAnimationLockEndUs(const int64_t lastAnimationLockEndsAtUs, const int64_t nowUs, const int64_t originalWaitUs, const int64_t rttUs, std::stringstream& description) {
 			const auto& runtimeConfig = Config->Runtime;
 			const auto mode = runtimeConfig.HighLatencyMitigationMode.Value();
+			description << std::format(" mode={}", static_cast<int>(mode) + 1);
 
 			// Obtain actual connection latency statistics.
 			// Preference for socket latency measurement if available.
@@ -357,7 +358,7 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 			} else {
 				description << std::format(" latency={}us", latencyUs);
 			}
-			
+
 			auto delay = 0LL;
 
 			switch (mode) {
