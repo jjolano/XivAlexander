@@ -348,14 +348,16 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 			const auto [rttMeanUs, rttDeviationUs] = Conn.ApplicationLatencyUs.MeanAndDeviation();
 			const auto latencyEstimateUs = ((rttMinUs + rttMeanUs) / 2) - ((rttDeviationUs + 30000) / 2);
 
-			// Replace latency with estimated latency if measurement failed.
-			if (latencyUs == INT64_MAX) {
+			// Replace latency with estimated latency under certain circumstances:
+			// - Failed to obtain measurement
+			// - Server RTT measurement is faster than actual latency
+			if (latencyUs == INT64_MAX || rttUs < latencyUs) {
 				latencyUs = latencyEstimateUs;
 				description << std::format(" latency={}us*", latencyUs);
 			} else {
 				description << std::format(" latency={}us", latencyUs);
 			}
-
+			
 			auto delay = 0LL;
 
 			switch (mode) {
@@ -368,9 +370,9 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 					break;
 
 				case HighLatencyMitigationMode::SimulateNormalizedRttAndLatency: {
-					// Server-side focused mode. Attempts to guess the server delay preferably using response time statistics.
-					// This aims to achieve a similar feel of real low latency play.
-					const auto bestLatencyUs = std::max(latencyUs, latencyEstimateUs);
+					// Server-side focused mode. Attempts to guess the server delay from response time statistics.
+					// Handles fake-ping VPN usage by using estimated latency when necessary.
+					auto bestLatencyUs = std::max(latencyUs, latencyEstimateUs);
 					
 					if(bestLatencyUs != latencyUs) {
 						description << std::format("->{}us", bestLatencyUs);
@@ -382,8 +384,8 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 				}
 
 				case HighLatencyMitigationMode::StandardGcdDivision: {
-					// Client-side focused mode. Emphasizes enforced time slices for animation locks, ensuring both consistent and legal gameplay.
-					delay = latencyUs > 0 ? ((rttUs % latencyUs) + (rttUs - latencyUs)) / 2 : rttUs;
+					// Client-side focused mode. Emphasizes enforced time slices for animation locks.
+					// Advantage is consistent gameplay, however may be disadvantageous in situations where oGCD -> GCD (from downtime for example) may be needed.
 
 					// Calculate new animation lock values based on equal slices of a 2.5 GCD.
 					// Assume GCD has 600ms lock time, and remove it from the total GCD time (this will be the weave window).
@@ -400,11 +402,16 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 					// Fallback to latency subtraction if multiple weaving is not possible.
 					if(split > 1) {
 						delay = (gcdWeaveUs % originalWaitUs) / split;
+					} else {
+						delay = latencyUs > 0 ? ((rttUs % latencyUs) + (rttUs - latencyUs)) / 2 : rttUs;
 					}
 
 					break;
 				}
 			}
+
+			// Disallow negative delay values.
+			delay = std::max(delay, 0LL);
 
 			// Return the new animation lock time without server response time delay, but with artificial delay (safety/lag) value.
 			description << std::format(" delay={}us", delay);
