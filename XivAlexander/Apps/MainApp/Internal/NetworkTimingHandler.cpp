@@ -334,54 +334,56 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 
 		int64_t ResolveNextAnimationLockEndUs(const int64_t lastAnimationLockEndsAtUs, const int64_t nowUs, const int64_t originalWaitUs, const int64_t rttUs, std::stringstream& description) {
 			const auto& runtimeConfig = Config->Runtime;
-			const auto pingTrackerUs = Conn.GetPingLatencyTrackerUs();
-
-			const auto socketLatencyUs = Conn.FetchSocketLatencyUs().value_or(INT64_MAX);
-			const auto pingLatencyUs = pingTrackerUs ? pingTrackerUs->Latest() : INT64_MAX;
-			const auto latencyUs = socketLatencyUs != INT64_MAX ? socketLatencyUs : pingLatencyUs;
-
 			auto mode = runtimeConfig.HighLatencyMitigationMode.Value();
 
+			// Obtain actual connection latency statistics.
+			// Preference for socket latency measurement if available.
+			const auto pingTrackerUs = Conn.GetPingLatencyTrackerUs();
+			const auto socketLatencyUs = Conn.FetchSocketLatencyUs().value_or(INT64_MAX);
+			const auto pingLatencyUs = pingTrackerUs ? pingTrackerUs->Latest() : INT64_MAX;
+			auto latencyUs = socketLatencyUs != INT64_MAX ? socketLatencyUs : pingLatencyUs;
+
+			// Additionally, obtain estimated latency for use as fallback.
+			const auto rttMinUs = Conn.ApplicationLatencyUs.Min();
+			const auto [rttMeanUs, rttDeviationUs] = Conn.ApplicationLatencyUs.MeanAndDeviation();
+			const auto latencyEstimateUs = ((rttMinUs + rttMeanUs) / 2) - ((rttDeviationUs + 30000) / 2);
+
+			// Replace latency with estimated latency if measurement failed.
 			if (latencyUs == INT64_MAX) {
-				mode = HighLatencyMitigationMode::SimulateRtt;
-				description << " latencyUnavailable";
+				latencyUs = latencyEstimateUs;
+				description << std::format(" latency={}us*", latencyUs);
 			} else {
 				description << std::format(" latency={}us", latencyUs);
 			}
 
+			const auto delay = 0LL;
+
 			switch (mode) {
 				case HighLatencyMitigationMode::SubtractLatency:
-					description << std::format(" delay={}us", Config->Runtime.ExpectedAnimationLockDurationUs.Value());
-					return nowUs + originalWaitUs - latencyUs;
+					delay = (rttUs - latencyUs);
+					break;
+				
+				case HighLatencyMitigationMode::SimulateRtt:
+					delay = Config->Runtime.ExpectedAnimationLockDurationUs.Value();
+					break;
 
 				case HighLatencyMitigationMode::SimulateNormalizedRttAndLatency: {
 					// Server-side focused mode. Attempts to guess the server delay preferably using response time statistics.
 					// This aims to achieve a similar feel of real low latency play.
-					const auto rttMinUs = Conn.ApplicationLatencyUs.Min();
-					description << std::format(" rttMin={}us", rttMinUs);
-
-					const auto [rttMeanUs, rttDeviationUs] = Conn.ApplicationLatencyUs.MeanAndDeviation();
-					description << std::format(" rttAvg={}+{}us", rttMeanUs, rttDeviationUs);
-
-					// Estimate latency based on server response time statistics.
-					auto latencyEstimateUs = ((rttMinUs + rttMeanUs) / 2) - ((rttDeviationUs + 30000) / 2);
-					latencyEstimateUs = std::max(latencyUs, latencyEstimateUs);
-					description << std::format(" latEst={}us", latencyEstimateUs);
-
-					// Estimate server delay.
-					const auto srvDelayUs = latencyEstimateUs > 0 ? ((rttUs % latencyEstimateUs) + (rttUs - latencyEstimateUs)) / 2 : rttUs;
+					const auto bestLatencyUs = std::max(latencyUs, latencyEstimateUs);
 					
-					// Assign new delay value.
-					const auto delay = srvDelayUs;
-					description << std::format(" delay={}us", delay);
+					if(bestLatencyUs != latencyUs) {
+						description << std::format("->{}us", bestLatencyUs);
+					}
 
-					return nowUs + (originalWaitUs - rttUs) + delay;
+					// Estimate server delay, using modulus to handle high ping rtt multipliers.
+					delay = bestLatencyUs > 0 ? ((rttUs % bestLatencyUs) + (rttUs - bestLatencyUs)) / 2 : rttUs;
+					break;
 				}
 
 				case HighLatencyMitigationMode::StandardGcdDivision: {
 					// Client-side focused mode. Emphasizes enforced time slices for animation locks, ensuring both consistent and legal gameplay.
-					const auto srvDelayUs = latencyUs > 0 ? ((rttUs % latencyUs) + (rttUs - latencyUs)) / 2 : rttUs;
-					description << std::format(" srv={}us", srvDelayUs);
+					delay = latencyUs > 0 ? ((rttUs % latencyUs) + (rttUs - latencyUs)) / 2 : rttUs;
 
 					// Calculate new animation lock values based on equal slices of a 2.5 GCD.
 					// Assume GCD has 600ms lock time, and remove it from the total GCD time (this will be the weave window).
@@ -391,26 +393,22 @@ struct XivAlexander::Apps::MainApp::Internal::NetworkTimingHandler::Implementati
 
 					// Determine how many weaves we can do given the lock time.
 					const auto split = static_cast<int>(std::floor(gcdWeaveUs / originalWaitUs));
-					description << std::format(" split={}", split);
+					description << std::format(" gcdsplit={}", split);
 
 					// Determine best animation lock value.
 					// Calculate the delay value to add on the original lock time.
 					// Fallback to latency subtraction if multiple weaving is not possible.
-					auto delay = srvDelayUs;
-
 					if(split > 1) {
-						const auto gcdDivUs = (gcdWeaveUs % originalWaitUs) / split;
-						delay = gcdDivUs;
+						delay = (gcdWeaveUs % originalWaitUs) / split;
 					}
 
-					description << std::format(" delay={}us", delay);
-
-					return nowUs + (originalWaitUs - rttUs) + delay;
+					break;
 				}
 			}
 
-			description << std::format(" delay={}us", Config->Runtime.ExpectedAnimationLockDurationUs.Value());
-			return lastAnimationLockEndsAtUs + originalWaitUs + Config->Runtime.ExpectedAnimationLockDurationUs.Value();
+			// Return the new animation lock time without server response time delay, but with artificial delay (safety/lag) value.
+			description << std::format(" delay={}us", delay);
+			return nowUs + (originalWaitUs - rttUs) + delay;
 		}
 	};
 
